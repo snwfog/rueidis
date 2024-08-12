@@ -3,6 +3,7 @@ package rueidis
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"runtime"
@@ -430,6 +431,8 @@ func (c *clusterClient) pick(ctx context.Context, slot uint16, toReplica bool) (
 		if err := c.refresh(ctx); err != nil {
 			return nil, err
 		}
+
+		fmt.Println("bidstore - rueidis - clusterClient - pick - refresh - p: ", p)
 		if p = c._pick(slot, toReplica); p == nil {
 			return nil, ErrNoSlot
 		}
@@ -497,9 +500,11 @@ process:
 	switch addr, mode := c.shouldRefreshRetry(resp.Error(), ctx); mode {
 	case RedirectMove:
 		resp = c.redirectOrNew(addr, cc, cmd.Slot(), mode).Do(ctx, cmd)
+		fmt.Println("bidstore - rueidis - clusterClient - do - RedirectMove - resp: ", resp)
 		goto process
 	case RedirectAsk:
 		results := c.redirectOrNew(addr, cc, cmd.Slot(), mode).DoMulti(ctx, cmds.AskingCmd, cmd)
+		fmt.Println("bidstore - rueidis - clusterClient - do - RedirectAsk - results: ", results)
 		resp = results.s[1]
 		resultsp.Put(results)
 		goto process
